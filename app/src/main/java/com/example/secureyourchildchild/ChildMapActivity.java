@@ -1,6 +1,7 @@
 package com.example.secureyourchildchild;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -13,6 +14,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -67,8 +69,8 @@ public class ChildMapActivity extends AppCompatActivity implements OnMapReadyCal
     String child_location_refrence="All_Child_Location_GeoFire",UID;
     FirebaseUser firebaseUser,user_data;
     FirebaseAuth firebaseAuth,mAuth;
-    SharedPreferences.Editor sharedEditor;
-    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor sharedEditor,sharedEditor1;
+    SharedPreferences sharedPreferences,sharedPreferences1;
     private DatabaseReference addchildDatabase,cInfo;
 
 
@@ -78,6 +80,7 @@ public class ChildMapActivity extends AppCompatActivity implements OnMapReadyCal
     NavigationView navigationView;
     TextView user_name,user_phone;
     DatabaseReference mdatabaseRef;
+    String CHILDID,user_type="user_type",latkey="latkey";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +90,13 @@ public class ChildMapActivity extends AppCompatActivity implements OnMapReadyCal
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
+        sharedPreferences=getSharedPreferences(latkey,MODE_PRIVATE);
+        sharedPreferences1=getSharedPreferences(user_type,MODE_PRIVATE);
+        sharedEditor=sharedPreferences.edit();
+        sharedEditor1=sharedPreferences1.edit();
+
 
         drawerLayout=findViewById(R.id.drawer);
         actionBarDrawerToggle=new ActionBarDrawerToggle(this,drawerLayout,R.string.Open,R.string.Close);
@@ -259,7 +269,35 @@ public class ChildMapActivity extends AppCompatActivity implements OnMapReadyCal
                 //Toast.makeText(this, "Parent added", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(ChildMapActivity.this,AddPatentActivityFromChild.class));
                 return true;
+            case R.id.signout:
+                final AlertDialog.Builder alert=new AlertDialog.Builder(this);
+                alert.setTitle("Confirm...");
+                alert.setMessage("Are You Sure , You Want To SignOut 😭 ?");
+                alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mAuth.signOut();
+                        sharedEditor.clear();
+                        sharedEditor.apply();
 
+                        sharedEditor1.clear();
+                        sharedEditor1.apply();
+
+                        Intent mainint = new Intent(ChildMapActivity.this, MainActivity.class);
+                        mainint.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(mainint);
+                    }
+                });
+                alert.setCancelable(true);
+                alert.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(ChildMapActivity.this, "Not Deleted", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                alert.show();
+
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
