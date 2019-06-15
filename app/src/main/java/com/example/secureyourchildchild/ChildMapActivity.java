@@ -7,14 +7,19 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
@@ -36,9 +41,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class ChildMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
@@ -57,11 +64,20 @@ public class ChildMapActivity extends AppCompatActivity implements OnMapReadyCal
     DatabaseReference ref;
     GeoFire geoFire;
     private FusedLocationProviderClient fusedLocationProviderClient;
-    String child_location_refrence="All_Child_Location_GeoFire";
-    FirebaseUser firebaseUser;
-    FirebaseAuth firebaseAuth;
+    String child_location_refrence="All_Child_Location_GeoFire",UID;
+    FirebaseUser firebaseUser,user_data;
+    FirebaseAuth firebaseAuth,mAuth;
     SharedPreferences.Editor sharedEditor;
     SharedPreferences sharedPreferences;
+    private DatabaseReference addchildDatabase,cInfo;
+
+
+    DrawerLayout drawerLayout;
+    ActionBarDrawerToggle actionBarDrawerToggle;
+    private View view;
+    NavigationView navigationView;
+    TextView user_name,user_phone;
+    DatabaseReference mdatabaseRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +87,52 @@ public class ChildMapActivity extends AppCompatActivity implements OnMapReadyCal
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        drawerLayout=findViewById(R.id.drawer);
+        actionBarDrawerToggle=new ActionBarDrawerToggle(this,drawerLayout,R.string.Open,R.string.Close);
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
+        actionBarDrawerToggle.syncState();
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        navigationView=findViewById(R.id.nav_view);
+        view=navigationView.getHeaderView(0);
+        user_name=view.findViewById(R.id.user_name);
+        user_phone=view.findViewById(R.id.user_phone);//01722709102
+
+        firebaseAuth=FirebaseAuth.getInstance();
+        firebaseUser=firebaseAuth.getCurrentUser();
+        UID=firebaseUser.getUid();
+//        mdatabaseRef= FirebaseDatabase.getInstance().getReference("All_GeoFences").child(UID);
+        //////////////////////////////////////////////////////////////
+        mAuth=FirebaseAuth.getInstance();
+        user_data=mAuth.getCurrentUser();
+
+        String Name;
+        cInfo=FirebaseDatabase.getInstance().getReference("Users");
+        cInfo.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot postSnapshot:dataSnapshot.getChildren()){
+                    UserInfoClass userData=postSnapshot.getValue(UserInfoClass.class);
+                    if (user_data.getUid().equals(userData.getUid())){
+                        user_name.setText(userData.getUsername());
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Toast.makeText(ChildMapActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+
+
+
+        user_phone.setText(user_data.getPhoneNumber());
+
+/////////////////////////////////////////////////////////////////
 
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseUser=firebaseAuth.getCurrentUser();
@@ -188,6 +250,9 @@ public class ChildMapActivity extends AppCompatActivity implements OnMapReadyCal
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Change the map type based on the user's selection.
+        if (actionBarDrawerToggle.onOptionsItemSelected(item)){
+            return true;
+        }
         switch (item.getItemId()) {
             case R.id.map_parent_add_bychild:
                 //mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
