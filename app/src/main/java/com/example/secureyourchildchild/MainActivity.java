@@ -41,6 +41,10 @@ public class MainActivity extends AppCompatActivity {
         name=sharedPreferences.getString(sharename,"null");
 
         mdatabaseref= FirebaseDatabase.getInstance().getReference("Users");
+
+        sharedEditor=sharedPreferences.edit();
+        sharedEditor.putString(user_type,"Child");
+        sharedEditor.apply();
 //        if (firebaseUser!=null){
 //            mdatabaseref.addValueEventListener(new ValueEventListener() {
 //                @Override
